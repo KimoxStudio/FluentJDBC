@@ -34,7 +34,12 @@ public class _FluentConnection {
 
     @Test
     public void should_form_query_with_values_and_table() throws Exception, MalformedSelectException {
-        FluentConnection.build().select().values("name, age").from("user");
-        assertThat(instance.query().toUpperCase(), is("SELECT NAME, AGE FROM USER"));
+        FluentConnection.build().
+                select().
+                parameter("name").as("a").
+                parameter("age").of("user").
+                from("user");
+        assertThat(instance.query().toUpperCase(), is("SELECT (NAME) AS A , (USER.AGE) FROM USER"));
     }
+
 }
