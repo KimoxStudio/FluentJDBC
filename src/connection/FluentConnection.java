@@ -57,11 +57,8 @@ public class FluentConnection {
         }
     }
 
-    public static QueryBuilder build(){
+    public static QueryBuilder with(){
         return new QueryBuilder();
     }
 
-    public String query() {
-        return QueryBuilder.query;
-    }
 }
