@@ -1,5 +1,7 @@
 package connection;
 
+import connection.exceptions.ConnectionException;
+import connection.exceptions.MalformedSelectException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,5 +24,17 @@ public class _FluentConnection {
         instance.close();
         FluentConnection.init("localhost", "test", "root", "");
         assertThat(FluentConnection.instance().isClosed(), is(true));
+    }
+
+    @Test(expected=MalformedSelectException.class)
+    public void should_not_allow_call_from_after_select() throws Exception, MalformedSelectException {
+        FluentConnection.build().select().from("user");
+        assertThat(instance.query().toUpperCase(), is("SELECT"));
+    }
+
+    @Test
+    public void should_form_query_with_values_and_table() throws Exception, MalformedSelectException {
+        FluentConnection.build().select().values("name, age").from("user");
+        assertThat(instance.query().toUpperCase(), is("SELECT NAME, AGE FROM USER"));
     }
 }

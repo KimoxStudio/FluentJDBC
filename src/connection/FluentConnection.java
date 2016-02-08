@@ -1,5 +1,7 @@
 package connection;
 
+import connection.exceptions.ConnectionException;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -31,7 +33,7 @@ public class FluentConnection {
         try {
             connector = connector == null ? DriverManager.getConnection(url, username, password) : connector;
         } catch (SQLException e) {
-            System.out.println(e.getMessage() + "\n" + Dialog.exceptionMessage());
+            System.out.println(e.getMessage() + "\n" + Dialog.connectionParameters());
             throw new ConnectionException();
         }
         return connection = (connection == null) ? new FluentConnection() : connection;
@@ -53,5 +55,13 @@ public class FluentConnection {
             e.printStackTrace();
             throw new ConnectionException();
         }
+    }
+
+    public static QueryBuilder build(){
+        return new QueryBuilder();
+    }
+
+    public String query() {
+        return QueryBuilder.query;
     }
 }
