@@ -1,4 +1,4 @@
-package connection;
+package connection.builder;
 
 import connection.exceptions.MalformedSelectException;
 
@@ -8,7 +8,7 @@ public class QueryBuilder {
 
     protected String query;
 
-    protected QueryBuilder() {
+    public QueryBuilder() {
 
     }
 
@@ -21,8 +21,12 @@ public class QueryBuilder {
         this.query += " " + query;
     }
 
+    public String query() {
+        return query;
+    }
 
-    protected class SelectBuilder {
+
+    public class SelectBuilder {
         private ArrayList<Field> fields = new ArrayList<>();
 
         public AllBuilder all(){
@@ -60,7 +64,7 @@ public class QueryBuilder {
             return field;
         }
 
-        class AllBuilder implements Parameter {
+        public class AllBuilder implements Parameter {
 
             public SelectBuilder of(String table) {
                 fields.get(fields.size() - 1).of(table);
@@ -79,7 +83,7 @@ public class QueryBuilder {
         }
     }
 
-    protected class EndQuery extends SelectBuilder {
+    public class EndQuery extends SelectBuilder {
         public String query(){
             return query;
         }

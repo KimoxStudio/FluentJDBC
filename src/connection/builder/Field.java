@@ -1,4 +1,4 @@
-package connection;
+package connection.builder;
 
 import connection.exceptions.MalformedSelectException;
 
@@ -31,7 +31,7 @@ public class Field implements Parameter {
         return selectBuilder.parameter(name);
     }
 
-    class FieldBuilder implements Parameter{
+    public class FieldBuilder implements Parameter{
         public QueryBuilder.SelectBuilder as(String aka) {
             Field.this.aka = aka;
             return selectBuilder;

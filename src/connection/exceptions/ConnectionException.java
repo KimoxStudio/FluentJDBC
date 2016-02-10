@@ -1,6 +1,6 @@
 package connection.exceptions;
 
-import connection.Dialog;
+import connection.builder.Dialog;
 
 public class ConnectionException extends Throwable {
     @Override

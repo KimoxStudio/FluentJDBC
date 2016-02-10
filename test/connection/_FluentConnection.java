@@ -1,5 +1,6 @@
 package connection;
 
+import connection.builder.QueryBuilder;
 import connection.exceptions.ConnectionException;
 import connection.exceptions.MalformedSelectException;
 import org.junit.Before;
@@ -17,7 +18,7 @@ public class _FluentConnection {
     @Before
     public void setUp() throws ConnectionException {
         init("localhost", "test", "root", "root");
-        instance = instance();
+        instance = connect();
     }
 
     @Test(expected=ConnectionException.class)
@@ -25,7 +26,7 @@ public class _FluentConnection {
         assertThat(instance.isClosed(), is(false));
         instance.close();
         init("localhost", "test", "root", "");
-        assertThat(instance().isClosed(), is(true));
+        assertThat(connect().isClosed(), is(true));
     }
 
     @Test(expected=MalformedSelectException.class)
@@ -35,7 +36,7 @@ public class _FluentConnection {
     }
 
     @Test
-    public void should_form_a_query_with_values_and_table() throws Exception, MalformedSelectException {
+    public void should_generate_a_query_with_values_and_table() throws Exception, MalformedSelectException {
         query = with().
                 select().
                 all().of("user").
@@ -46,7 +47,7 @@ public class _FluentConnection {
     }
 
     @Test
-    public void should_form_a_basic_query() throws Exception, MalformedSelectException {
+    public void should_generate_a_basic_query() throws Exception, MalformedSelectException {
         query = with()
                 .select()
                 .all()
@@ -55,7 +56,7 @@ public class _FluentConnection {
     }
 
     @Test
-    public void should_form_a_query_with_values() throws Exception, MalformedSelectException {
+    public void should_generate_a_query_with_values() throws Exception, MalformedSelectException {
         query = with()
                 .select()
                 .parameter("Z")
@@ -65,7 +66,7 @@ public class _FluentConnection {
     }
 
     @Test
-    public void should_form_a_query_with_values_with_names() throws Exception, MalformedSelectException {
+    public void should_generate_a_query_with_values_with_names() throws Exception, MalformedSelectException {
         query = with()
                 .select()
                 .parameter("Z").as("F")
@@ -74,7 +75,7 @@ public class _FluentConnection {
         assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z FROM X"));
     }
     @Test
-    public void should_form_a_query_with_queries() throws Exception, MalformedSelectException {
+    public void should_generate_a_query_with_queries() throws Exception, MalformedSelectException {
         query = with()
                 .select()
                 .parameter("Z").as("F")

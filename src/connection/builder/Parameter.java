@@ -1,4 +1,4 @@
-package connection;
+package connection.builder;
 
 import connection.exceptions.MalformedSelectException;
 
