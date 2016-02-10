@@ -13,7 +13,7 @@ import static org.junit.Assert.assertThat;
 public class _FluentConnection {
 
     private FluentConnection instance;
-    private QueryBuilder.EndQuery query;
+    private QueryBuilder.Query query;
 
     @Before
     public void setUp() throws ConnectionException {
@@ -40,8 +40,8 @@ public class _FluentConnection {
         query = with().
                 select().
                 all().of("user").
-                parameter("name").as("a").
-                parameter("age").of("user").
+                field("name").as("a").
+                field("age").of("user").
                 from("user");
         assertThat(query.query().toUpperCase(), is("SELECT USER.* , NAME AS A , USER.AGE FROM USER"));
     }
@@ -59,7 +59,7 @@ public class _FluentConnection {
     public void should_generate_a_query_with_values() throws Exception, MalformedSelectException {
         query = with()
                 .select()
-                .parameter("Z")
+                .field("Z")
                 .parameter("K")
                 .from("X");
         assertThat(query.query().toUpperCase(), is("SELECT Z , K FROM X"));
@@ -69,20 +69,87 @@ public class _FluentConnection {
     public void should_generate_a_query_with_values_with_names() throws Exception, MalformedSelectException {
         query = with()
                 .select()
-                .parameter("Z").as("F")
-                .parameter("K").as("Z")
+                .field("Z").as("F")
+                .field("K").as("Z")
                 .from("X");
         assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z FROM X"));
     }
+
     @Test
     public void should_generate_a_query_with_queries() throws Exception, MalformedSelectException {
         query = with()
                 .select()
-                .parameter("Z").as("F")
-                .parameter("K").as("Z")
-                .parameter(with()
+                .field("Z").as("F")
+                .field("K").as("Z")
+                .field(with()
                         .select().all().from("pepe")).as("query")
                 .from("X");
         assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , (SELECT * FROM PEPE) AS QUERY FROM X"));
+    }
+
+    @Test
+    public void should_generate_a_query_with_if_sentence_with_one_condition() throws Exception, MalformedSelectException {
+        query = with()
+                .select()
+                .field("Z").as("F")
+                .field("K").as("Z")
+                .condition(with()
+                        .select().field("COUNT(*)").from("pepe")).isMoreThan("5").then("YES")
+                .ifNot("NO")
+                .as("query")
+                .from("X");
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5,\"YES\",\"NO\") AS QUERY FROM X"));
+    }
+
+    @Test
+    public void should_generate_a_query_with_if_sentence_with_ands_conditions() throws Exception, MalformedSelectException {
+        query = with()
+                .select()
+                .field("Z").as("F")
+                .field("K").as("Z")
+                .condition(with()
+                        .select().field("COUNT(*)").from("pepe")).isMoreThan("5").and().isLessThan("10").then("YES")
+                .ifNot("NO")
+                .as("query")
+                .from("X");
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 AND (SELECT COUNT(*) FROM PEPE) < 10,\"YES\",\"NO\") AS QUERY FROM X"));
+
+        query = with()
+                .select()
+                .field("Z").as("F")
+                .field("K").as("Z")
+                .condition(with()
+                        .select().field("COUNT(*)").from("pepe")).isMoreThan("5").and(with().select().field("COUNT(*)").from("juan")).isLessThan("10").then("YES")
+                .ifNot("NO")
+                .as("query")
+                .from("X");
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 AND (SELECT COUNT(*) FROM JUAN) < 10,\"YES\",\"NO\") AS QUERY FROM X"));
+    }
+    @Test
+    public void should_generate_a_query_with_if_sentence_with_ors_conditions() throws Exception, MalformedSelectException {
+        QueryBuilder.Query condition = with()
+                .select().field("COUNT(*)").from("pepe");
+
+        query = with()
+                .select()
+                .field("Z").as("F")
+                .field("K").as("Z")
+                .condition(condition).isMoreThan("5").or().isLessThan("10").then("YES")
+                .ifNot("NO")
+                .as("query")
+                .from("X");
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 OR (SELECT COUNT(*) FROM PEPE) < 10,\"YES\",\"NO\") AS QUERY FROM X"));
+
+        query = with()
+                .select()
+                .field("Z").as("F")
+                .field("K").as("Z")
+                .condition(condition).isMoreThan("5").
+                        or(with().select().field("COUNT(*)").from("juan")).isLessThan("10").
+                        then("YES")
+                        .ifNot("NO")
+                .as("query")
+                .from("X");
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 OR (SELECT COUNT(*) FROM JUAN) < 10,\"YES\",\"NO\") AS QUERY FROM X"));
     }
 }
