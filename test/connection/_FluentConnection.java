@@ -1,6 +1,7 @@
 package connection;
 
-import connection.builder.QueryBuilder;
+import connection.builder.WhereBuilder;
+import connection.builder.helpers.Query;
 import connection.exceptions.ConnectionException;
 import connection.exceptions.MalformedSelectException;
 import org.junit.Before;
@@ -13,7 +14,7 @@ import static org.junit.Assert.assertThat;
 public class _FluentConnection {
 
     private FluentConnection instance;
-    private QueryBuilder.Query query;
+    private WhereBuilder query;
 
     @Before
     public void setUp() throws ConnectionException {
@@ -31,7 +32,7 @@ public class _FluentConnection {
 
     @Test(expected=MalformedSelectException.class)
     public void should_not_allow_call_from_after_select() throws Exception, MalformedSelectException {
-        query = with().select().from("user");
+        query = with().select().from("user").where();
         assertThat(query.query().toUpperCase(), is("SELECT"));
     }
 
@@ -42,8 +43,8 @@ public class _FluentConnection {
                 all().of("user").
                 field("name").as("a").
                 field("age").of("user").
-                from("user");
-        assertThat(query.query().toUpperCase(), is("SELECT USER.* , NAME AS A , USER.AGE FROM USER"));
+                from("user").where();
+        assertThat(query.query().toUpperCase(), is("SELECT USER.* , NAME AS A , USER.AGE FROM USER WHERE"));
     }
 
     @Test
@@ -51,8 +52,8 @@ public class _FluentConnection {
         query = with()
                 .select()
                 .all()
-                .from("X");
-        assertThat(query.query().toUpperCase(), is("SELECT * FROM X"));
+                .from("X").where();
+        assertThat(query.query().toUpperCase(), is("SELECT * FROM X WHERE"));
     }
 
     @Test
@@ -60,9 +61,9 @@ public class _FluentConnection {
         query = with()
                 .select()
                 .field("Z")
-                .parameter("K")
-                .from("X");
-        assertThat(query.query().toUpperCase(), is("SELECT Z , K FROM X"));
+                .field("K")
+                .from("X").where();
+        assertThat(query.query().toUpperCase(), is("SELECT Z , K FROM X WHERE"));
     }
 
     @Test
@@ -71,8 +72,8 @@ public class _FluentConnection {
                 .select()
                 .field("Z").as("F")
                 .field("K").as("Z")
-                .from("X");
-        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z FROM X"));
+                .from("X").where();
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z FROM X WHERE"));
     }
 
     @Test
@@ -83,8 +84,8 @@ public class _FluentConnection {
                 .field("K").as("Z")
                 .field(with()
                         .select().all().from("pepe")).as("query")
-                .from("X");
-        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , (SELECT * FROM PEPE) AS QUERY FROM X"));
+                .from("X").where();
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , (SELECT * FROM PEPE) AS QUERY FROM X WHERE"));
     }
 
     @Test
@@ -97,8 +98,8 @@ public class _FluentConnection {
                         .select().field("COUNT(*)").from("pepe")).isMoreThan("5").then("YES")
                 .ifNot("NO")
                 .as("query")
-                .from("X");
-        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5,\"YES\",\"NO\") AS QUERY FROM X"));
+                .from("X").where();
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5,\"YES\",\"NO\") AS QUERY FROM X WHERE"));
     }
 
     @Test
@@ -111,8 +112,8 @@ public class _FluentConnection {
                         .select().field("COUNT(*)").from("pepe")).isMoreThan("5").and().isLessThan("10").then("YES")
                 .ifNot("NO")
                 .as("query")
-                .from("X");
-        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 AND (SELECT COUNT(*) FROM PEPE) < 10,\"YES\",\"NO\") AS QUERY FROM X"));
+                .from("X").where();
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 AND (SELECT COUNT(*) FROM PEPE) < 10,\"YES\",\"NO\") AS QUERY FROM X WHERE"));
 
         query = with()
                 .select()
@@ -122,12 +123,12 @@ public class _FluentConnection {
                         .select().field("COUNT(*)").from("pepe")).isMoreThan("5").and(with().select().field("COUNT(*)").from("juan")).isLessThan("10").then("YES")
                 .ifNot("NO")
                 .as("query")
-                .from("X");
-        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 AND (SELECT COUNT(*) FROM JUAN) < 10,\"YES\",\"NO\") AS QUERY FROM X"));
+                .from("X").where();
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 AND (SELECT COUNT(*) FROM JUAN) < 10,\"YES\",\"NO\") AS QUERY FROM X WHERE"));
     }
     @Test
     public void should_generate_a_query_with_if_sentence_with_ors_conditions() throws Exception, MalformedSelectException {
-        QueryBuilder.Query condition = with()
+        Query condition = with()
                 .select().field("COUNT(*)").from("pepe");
 
         query = with()
@@ -137,19 +138,59 @@ public class _FluentConnection {
                 .condition(condition).isMoreThan("5").or().isLessThan("10").then("YES")
                 .ifNot("NO")
                 .as("query")
-                .from("X");
-        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 OR (SELECT COUNT(*) FROM PEPE) < 10,\"YES\",\"NO\") AS QUERY FROM X"));
+                .from("X").where();
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 OR (SELECT COUNT(*) FROM PEPE) < 10,\"YES\",\"NO\") AS QUERY FROM X WHERE"));
 
         query = with()
                 .select()
                 .field("Z").as("F")
                 .field("K").as("Z")
-                .condition(condition).isMoreThan("5").
-                        or(with().select().field("COUNT(*)").from("juan")).isLessThan("10").
-                        then("YES")
+                .condition(condition).isMoreThan("5")
+                        .or(with().select().field("COUNT(*)").from("juan")).isLessThan("10")
+                        .then("YES")
                         .ifNot("NO")
                 .as("query")
-                .from("X");
-        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 OR (SELECT COUNT(*) FROM JUAN) < 10,\"YES\",\"NO\") AS QUERY FROM X"));
+                .from("X").where();
+        assertThat(query.query().toUpperCase(), is("SELECT Z AS F , K AS Z , IF((SELECT COUNT(*) FROM PEPE) > 5 OR (SELECT COUNT(*) FROM JUAN) < 10,\"YES\",\"NO\") AS QUERY FROM X WHERE"));
+    }
+
+    @Test
+    public void should_generate_from_sentence_with_inner_query() throws Exception, MalformedSelectException {
+        query = with()
+                .select()
+                .all()
+                .from(with().select().all().from("juan")).as("query").where();
+        assertThat(query.query().toUpperCase(), is("SELECT * FROM (SELECT * FROM JUAN) AS QUERY WHERE"));
+    }
+
+    @Test (expected=MalformedSelectException.class)
+    public void should_generate_an_exception_when_from_is_called_after_select() throws Exception, MalformedSelectException {
+        query = with().select().from("juan").where();
+    }
+
+    @Test
+    public void should_generate_multiple_from_sentences() throws Exception, MalformedSelectException {
+        query = with()
+                .select()
+                .all()
+                .from(with().select().all().from("juan")).as("query")
+                .andOf("Juan")
+                .andOf(with().select().all().from("pepe")).as("luis")
+                .andWithAs("nene").as("Loco").where();
+        assertThat(query.query().toUpperCase(), is("SELECT * FROM (SELECT * FROM JUAN) AS QUERY , JUAN , (SELECT * FROM PEPE) AS LUIS , NENE AS LOCO WHERE"));
+    }
+
+    @Test
+    public void where_sentence_pending() throws Exception, MalformedSelectException {
+        query = with()
+                .select()
+                .all()
+                .from(with().select().all().from("juan")).as("query")
+                .andOf("Juan")
+                .andOf(with().select().all().from("pepe")).as("luis")
+                .andWithAs("nene").as("Loco")
+                .where();
+        assertThat(query.query().toUpperCase(), is("SELECT * FROM (SELECT * FROM JUAN) AS QUERY , JUAN , (SELECT * FROM PEPE) AS LUIS , NENE AS LOCO WHERE"));
+
     }
 }

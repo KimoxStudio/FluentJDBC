@@ -1,8 +1,8 @@
 package connection.builder.helpers;
 
-import connection.builder.QueryBuilder;
+import connection.builder.FromBuilder;
 import connection.exceptions.MalformedSelectException;
 
 public interface From {
-    QueryBuilder.SelectBuilder from(String table) throws MalformedSelectException;
+    FromBuilder from(String table) throws MalformedSelectException;
 }

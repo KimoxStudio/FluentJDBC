@@ -1,8 +1,6 @@
 package connection.builder;
 
-import connection.builder.helpers.As;
-import connection.builder.helpers.From;
-import connection.builder.helpers.Parameter;
+import connection.builder.helpers.*;
 import connection.exceptions.MalformedSelectException;
 
 import java.util.ArrayList;
@@ -28,7 +26,6 @@ public class QueryBuilder {
         return query;
     }
 
-
     public class SelectBuilder {
         private ArrayList<Field> fields = new ArrayList<>();
 
@@ -37,13 +34,28 @@ public class QueryBuilder {
             return new AllBuilder();
         }
 
-        public Query from(String table) throws MalformedSelectException {
+        public FromBuilder from(String table) throws MalformedSelectException {
             if (fields.size() == 0)
                 throw new MalformedSelectException();
             build();
             add("FROM");
             add(table);
-            return new Query();
+            return new FromBuilder(QueryBuilder.this);
+        }
+
+        public FromAs from(Query query) throws MalformedSelectException {
+            if (fields.size() == 0)
+                throw new MalformedSelectException();
+            build();
+            add("FROM");
+            add("(" + query.query() + ")");
+            return new FromAs() {
+                @Override
+                public FromBuilder as(String aka) {
+                    add("AS " + aka);
+                    return new FromBuilder(QueryBuilder.this);
+                }
+            };
         }
 
         private void build() {
@@ -58,7 +70,7 @@ public class QueryBuilder {
             return insert(name);
         }
 
-        public Field field(Query query) {
+        public Field field(connection.builder.helpers.Query query) {
             return insert(String.format("(%s)", query.query()));
         }
 
@@ -81,13 +93,17 @@ public class QueryBuilder {
             }
 
             @Override
-            public Field parameter(String name) {
+            public Field field(String name) {
                 return SelectBuilder.this.field(name);
             }
 
             @Override
-            public Query from(String table) throws MalformedSelectException {
+            public FromBuilder from(String table) throws MalformedSelectException {
                 return SelectBuilder.this.from(table);
+            }
+
+            public FromAs from(Query query) throws MalformedSelectException {
+                return SelectBuilder.this.from(query);
             }
         }
 
@@ -142,9 +158,9 @@ public class QueryBuilder {
                     IfBuilder.this.query += String.format(",\"%s\"", yesCondition);
                     return new ifNot() {
                         @Override
-                        public As ifNot(final String noCondition) {
+                        public SelectAs ifNot(final String noCondition) {
                             IfBuilder.this.query += String.format(",\"%s\")", noCondition);
-                            return new As() {
+                            return new SelectAs() {
                                 @Override
                                 public SelectBuilder as(String aka) {
                                     return SelectBuilder.this.field(IfBuilder.this.query).as(aka);
@@ -177,10 +193,10 @@ public class QueryBuilder {
         }
     }
     public interface ifNot{
-         As ifNot(String noCondition);
+         SelectAs ifNot(String noCondition);
     }
 
-    public class Query extends SelectBuilder {
+    public class Result extends SelectBuilder {
         public String query(){
             return query;
         }

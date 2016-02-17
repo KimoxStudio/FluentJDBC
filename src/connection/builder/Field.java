@@ -1,6 +1,6 @@
 package connection.builder;
 
-import connection.builder.helpers.As;
+import connection.builder.helpers.SelectAs;
 import connection.builder.helpers.From;
 import connection.builder.helpers.Parameter;
 import connection.exceptions.MalformedSelectException;
@@ -26,15 +26,15 @@ public class Field implements Parameter, From {
     }
 
     @Override
-    public QueryBuilder.Query from(String table) throws MalformedSelectException {
+    public FromBuilder from(String table) throws MalformedSelectException {
         return selectBuilder.from(table);
     }
 
-    public Field parameter(String name) {
+    public Field field(String name) {
         return selectBuilder.field(name);
     }
 
-    public class FieldBuilder implements Parameter, As {
+    public class FieldBuilder implements Parameter, SelectAs {
 
         @Override
         public QueryBuilder.SelectBuilder as(String aka) {
@@ -43,7 +43,7 @@ public class Field implements Parameter, From {
         }
 
         @Override
-        public Field parameter(String name) {
+        public Field field(String name) {
             return selectBuilder.field(name);
         }
 
@@ -51,14 +51,14 @@ public class Field implements Parameter, From {
             return selectBuilder.all();
         }
 
-        public QueryBuilder.Query from(String table) throws MalformedSelectException {
+        public FromBuilder from(String table) throws MalformedSelectException {
             return selectBuilder.from(table);
         }
     }
 
 
 
-    public String build() {
+    protected String build() {
         return String.format("%s%s", name, aka == null ? "" : " AS " + aka);
     }
 }
